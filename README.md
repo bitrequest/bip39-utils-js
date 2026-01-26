@@ -384,8 +384,8 @@ For production wallets, always use hardware wallets or audited wallet software.
 
 ## Related Projects
 
-- [crypto-utils-js](./crypto-utils.md) - Low-level cryptocurrency utilities
-- [xmr-utils-js](./xmr-utils-js.md) - Monero cryptographic utilities
+- [crypto-utils-js](https://github.com/bitrequest/crypto-utils-js) - Low-level cryptocurrency utilities
+- [xmr-utils-js](https://github.com/bitrequest/xmr-utils-js) - Monero cryptographic utilities
 - [bitrequest](https://github.com/bitrequest/bitrequest.github.io) - Cryptocurrency point-of-sale PWA
 
 ---
