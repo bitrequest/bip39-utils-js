@@ -1,6 +1,8 @@
-# BIP39 Utils
+# BIP39 Utils JS
 
-Standalone Javascript BIP39/BIP32 HD Wallet library for cryptocurrency applications. Extracted from [bitrequest](https://github.com/bitrequest/bitrequest.github.io) for reuse in other projects. - no Node.js required
+Standalone JavaScript BIP39/BIP32 HD Wallet library for cryptocurrency applications. Extracted from [bitrequest](https://github.com/bitrequest/bitrequest.github.io) for reuse in other projects.
+
+*No Node.js, no WebAssembly, just vanilla JavaScript.*
 
 ## Features
 
@@ -9,7 +11,7 @@ Standalone Javascript BIP39/BIP32 HD Wallet library for cryptocurrency applicati
 - **Seed Derivation** - PBKDF2 with 2048 iterations (BIP39 standard)
 - **BIP32 Key Derivation** - Hierarchical deterministic key derivation
 - **Multi-Currency Support** - Bitcoin, Litecoin, Ethereum, Dogecoin, Dash, Bitcoin Cash
-- **Address Formatting** - Legacy, SegWit (Bech32), and CashAddr formats
+- **Address Formatting** - Legacy (P2PKH), SegWit (Bech32), and CashAddr formats
 - **Extended Keys** - xpub/zpub generation and parsing with address derivation
 
 ## Live Demo
@@ -24,8 +26,6 @@ Standalone Javascript BIP39/BIP32 HD Wallet library for cryptocurrency applicati
 
 ### Quick Download (Terminal)
 
-Run this command to download all required files:
-
 ```bash
 mkdir bip39_utils && cd bip39_utils && \
 curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests_bip39_utils.html && \
@@ -36,18 +36,7 @@ curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master
 
 Then open `unit_tests_bip39_utils.html` in your browser.
 
-### Crypto Utils Only
-
-```bash
-mkdir crypto_utils && cd crypto_utils && \
-curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests_crypto_utils.html && \
-curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_crypto_utils.js && \
-curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_sjcl.js
-```
-
 ### Manual Download
-
-Right-click and "Save As" for each file:
 
 | File | Description |
 |------|-------------|
@@ -55,7 +44,6 @@ Right-click and "Save As" for each file:
 | [assets_js_lib_crypto_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_crypto_utils.js) | Crypto utilities (secp256k1, hashing, encoding) |
 | [assets_js_lib_bip39_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_bip39_utils.js) | BIP39/BIP32 HD wallet functions |
 | [unit_tests_bip39_utils.html](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests_bip39_utils.html) | Interactive test suite |
-| [unit_tests_crypto_utils.html](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests_crypto_utils.html) | Crypto utils test suite |
 
 ---
 
@@ -69,74 +57,134 @@ Right-click and "Save As" for each file:
 <script src="assets_js_lib_bip39_utils.js"></script>
 ```
 
+---
+
+## Quick Start Examples
+
 ### Generate Mnemonic
 
 ```javascript
+// Generate 12-word mnemonic (128-bit entropy)
 const mnemonic = Bip39Utils.generate_mnemonic(12);
 // "army van defense carry jealous true garbage claim echo media make crunch"
+
+// Other options: 15, 18, 21, or 24 words
+const mnemonic24 = Bip39Utils.generate_mnemonic(24);
 ```
 
 ### Validate Mnemonic
 
 ```javascript
+const mnemonic = "army van defense carry jealous true garbage claim echo media make crunch";
+
+// Check if valid BIP39 phrase (includes checksum validation)
 const isValid = Bip39Utils.validate_mnemonic(mnemonic);
 // true
 
-const invalidWord = Bip39Utils.find_invalid_word(mnemonic.split(" "));
-// undefined (all valid) or returns the invalid word
+// Find invalid words (pass array of words)
+const words = mnemonic.split(" ");
+const invalidWord = Bip39Utils.find_invalid_word(words);
+// undefined (all valid) or returns the first invalid word
 ```
 
-### Derive Address
+### Derive Bitcoin SegWit Address
 
 ```javascript
+const mnemonic = "army van defense carry jealous true garbage claim echo media make crunch";
+
+// Step 1: Convert mnemonic to seed
+const seed = Bip39Utils.mnemonic_to_seed(mnemonic);
+
+// Step 2: Get master root key
+const rootKey = Bip39Utils.get_rootkey(seed);
+const masterKey = rootKey.slice(0, 64);   // First 32 bytes = private key
+const chainCode = rootKey.slice(64);       // Last 32 bytes = chain code
+
+// Step 3: Derive key at BIP84 path (SegWit)
+const derived = Bip39Utils.derive_x({
+    dpath: "m/84'/0'/0'/0/0",  // BIP84 Bitcoin SegWit, first address
+    key: masterKey,
+    cc: chainCode
+});
+
+// Step 4: Generate SegWit address
+const publicKey = CryptoUtils.get_publickey(derived.key);
+const address = CryptoUtils.pub_to_address_bech32("bc", publicKey);
+// "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
+```
+
+### Derive Bitcoin Legacy Address
+
+```javascript
+const mnemonic = "army van defense carry jealous true garbage claim echo media make crunch";
 const seed = Bip39Utils.mnemonic_to_seed(mnemonic);
 const rootKey = Bip39Utils.get_rootkey(seed);
 
+// Derive at BIP44 path (Legacy)
 const derived = Bip39Utils.derive_x({
-    dpath: "m/44'/0'/0'/0/0",
+    dpath: "m/44'/0'/0'/0/0",  // BIP44 Bitcoin Legacy
     key: rootKey.slice(0, 64),
     cc: rootKey.slice(64)
 });
 
+// Generate Legacy address using format_keys
 const config = Bip39Utils.get_bip32dat("bitcoin");
 const keys = Bip39Utils.format_keys(seed, derived, config, 0, "bitcoin");
-// { index: 0, address: "1HQ3...", pubkey: "02a1...", privkey: "Kym..." }
+// { index: 0, address: "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm", pubkey: "02a1...", privkey: "Kym..." }
 ```
 
-### Generate Extended Public Key (xpub/zpub)
+### Derive Ethereum Address
 
 ```javascript
+const mnemonic = "army van defense carry jealous true garbage claim echo media make crunch";
+const seed = Bip39Utils.mnemonic_to_seed(mnemonic);
+const rootKey = Bip39Utils.get_rootkey(seed);
+
+const derived = Bip39Utils.derive_x({
+    dpath: "m/44'/60'/0'/0/0",  // BIP44 Ethereum
+    key: rootKey.slice(0, 64),
+    cc: rootKey.slice(64)
+});
+
+const config = Bip39Utils.get_bip32dat("ethereum");
+const keys = Bip39Utils.format_keys(seed, derived, config, 0, "ethereum");
+// { address: "0x...", pubkey: "...", privkey: "..." }
+```
+
+---
+
+## Extended Public Keys (xpub/zpub)
+
+Extended public keys allow generating receive addresses without exposing private keys - essential for watch-only wallets and payment processing.
+
+### Generate xpub/zpub
+
+```javascript
+const mnemonic = "army van defense carry jealous true garbage claim echo media make crunch";
 const seed = Bip39Utils.mnemonic_to_seed(mnemonic);
 const rootKey = Bip39Utils.get_rootkey(seed);
 const masterKey = rootKey.slice(0, 64);
 const chainCode = rootKey.slice(64);
 
-// Derive to account level (e.g., m/84'/0'/0' for BTC SegWit)
+// Derive to account level (m/84'/0'/0' for BTC SegWit)
 const derived = Bip39Utils.derive_x({
     dpath: "m/84'/0'/0'",
     key: masterKey,
     cc: chainCode
 });
 
-// Get public key from derived private key
-const publicKey = CryptoUtils.get_publickey(derived.key);
-
-// Build xpub data
-const keyData = {
-    chaincode: derived.chaincode,
-    purpose: "84'",
-    childnumber: derived.childnumber,
-    depth: derived.depth,
-    fingerprint: derived.fingerprint,
-    xpub: true,
-    key: publicKey
-};
-
-// Generate xpub string
+// Get bitcoin config
 const config = Bip39Utils.get_bip32dat("bitcoin");
-const extKeys = Bip39Utils.ext_keys(keyData, config);
-console.log(extKeys.ext_key);
+
+// Generate extended keys
+// ext_keys returns { xprv: "zprv...", xpub: "zpub..." }
+const extKeys = Bip39Utils.ext_keys(derived, config);
+
+console.log(extKeys.xpub);
 // "zpub6rMRRntHrvMM2EPvnrZ7HmbnNr74JAxmCXFbAwfjNKqGXJbHve9yWMk9SzsF9jQHM6RsaExfmAjyypn369i5dT3uXrRyiDra5nqpCjuPmWT"
+
+console.log(extKeys.xprv);
+// "zprv6rMRRntHrvMM..." (extended private key)
 ```
 
 ### Parse xpub and Derive Addresses
@@ -144,45 +192,66 @@ console.log(extKeys.ext_key);
 ```javascript
 const xpub = "zpub6rMRRntHrvMM2EPvnrZ7HmbnNr74JAxmCXFbAwfjNKqGXJbHve9yWMk9SzsF9jQHM6RsaExfmAjyypn369i5dT3uXrRyiDra5nqpCjuPmWT";
 
-// Parse xpub to get key and chaincode
+// Parse xpub to extract key and chaincode
 const parsed = Bip39Utils.key_cc_xpub(xpub);
 // { key: "0225d06c...", cc: "1975ffb9...", version: "04b24746" }
 
 // Parse extended key details
-const extended = Bip39Utils.objectify_extended(CryptoUtils.b58check_decode(xpub));
-// { version, depth, fingerprint, childnumber, chaincode, key }
+const decoded = CryptoUtils.b58check_decode(xpub);
+const extended = Bip39Utils.objectify_extended(decoded);
+// { version: "04b24746", depth: "03", fingerprint: "a49ac50b", 
+//   childnumber: "80000000", chaincode: "...", key: "..." }
 
-// Derive child address at index 0 (path M/0/0)
+// Derive child address at index 0 (path M/0/0 from xpub)
+// Use "M" (uppercase) for public key derivation
 const derived = Bip39Utils.derive_x({
-    dpath: "M/0/0",  // Use "M" for public key derivation
+    dpath: "M/0/0",
     key: parsed.key,
     cc: parsed.cc
 });
 
-// Generate address from derived public key
+// Generate SegWit address from derived public key
 const address = CryptoUtils.pub_to_address_bech32("bc", derived.key);
 // "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
 ```
 
-### Supported Currencies
+### Batch Address Generation from xpub
 
-| Currency | Default Path | Address Format | xpub Format |
-|----------|--------------|----------------|-------------|
-| Bitcoin SegWit | `m/84'/0'/0'/0/` | Native SegWit (bc1q...) | zpub |
-| Bitcoin Legacy | `m/44'/0'/0'/0/` | P2PKH (1...) | xpub |
-| Litecoin SegWit | `m/84'/2'/0'/0/` | Native SegWit (ltc1q...) | zpub |
-| Litecoin Legacy | `m/44'/2'/0'/0/` | P2PKH (L...) | Ltub |
-| Ethereum | `m/44'/60'/0'/0/` | 0x... | xpub |
-| Dogecoin | `m/44'/3'/0'/0/` | D... | dgub |
-| Dash | `m/44'/5'/0'/0/` | X... | xpub |
-| Bitcoin Cash | `m/44'/145'/0'/0/` | CashAddr | xpub |
+```javascript
+const xpub = "zpub6rMRRntHrvMM2...";
+const parsed = Bip39Utils.key_cc_xpub(xpub);
+
+// Generate first 5 receive addresses
+for (let i = 0; i < 5; i++) {
+    const derived = Bip39Utils.derive_x({
+        dpath: "M/0/" + i,  // M/0/0, M/0/1, M/0/2...
+        key: parsed.key,
+        cc: parsed.cc
+    });
+    const address = CryptoUtils.pub_to_address_bech32("bc", derived.key);
+    console.log(`Address ${i}: ${address}`);
+}
+```
+
+---
+
+## Supported Currencies
+
+| Currency | Coin ID | SegWit Path | Legacy Path | Address Format |
+|----------|---------|-------------|-------------|----------------|
+| Bitcoin | `bitcoin` | `m/84'/0'/0'/0/` | `m/44'/0'/0'/0/` | bc1q... / 1... |
+| Litecoin | `litecoin` | `m/84'/2'/0'/0/` | `m/44'/2'/0'/0/` | ltc1q... / L... |
+| Ethereum | `ethereum` | - | `m/44'/60'/0'/0/` | 0x... |
+| Dogecoin | `dogecoin` | - | `m/44'/3'/0'/0/` | D... |
+| Dash | `dash` | - | `m/44'/5'/0'/0/` | X... |
+| Bitcoin Cash | `bitcoin-cash` | - | `m/44'/145'/0'/0/` | bitcoincash:q... |
 
 ### xpub Version Bytes
 
-| Version | Format | Coins |
-|---------|--------|-------|
+| Version Hex | Prefix | Used By |
+|-------------|--------|---------|
 | `04b24746` | zpub | BTC SegWit, LTC SegWit |
-| `0488b21e` | xpub | BTC Legacy, LTC Legacy, BCH, DASH, DOGE, ETH |
+| `0488b21e` | xpub | BTC Legacy, BCH, DASH, ETH |
 | `019da462` | Ltub | LTC Legacy |
 | `02facafd` | dgub | DOGE |
 
@@ -192,32 +261,47 @@ const address = CryptoUtils.pub_to_address_bech32("bc", derived.key);
 
 ### Mnemonic Functions
 
-| Function | Description |
-|----------|-------------|
-| `generate_mnemonic(word_count)` | Generate random mnemonic (12/15/18/21/24 words) |
-| `validate_mnemonic(mnemonic)` | Validate BIP39 checksum |
-| `find_invalid_word(word_array)` | Find first invalid word |
-| `mnemonic_to_seed(mnemonic, passphrase?)` | Convert to 512-bit seed |
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `generate_mnemonic` | `word_count` (12/15/18/21/24) | `string` | Generate random BIP39 mnemonic |
+| `validate_mnemonic` | `mnemonic` | `boolean` | Validate BIP39 checksum |
+| `find_invalid_word` | `word_array` | `string\|undefined` | Find first invalid word |
+| `mnemonic_to_seed` | `mnemonic`, `passphrase?` | `string` (hex) | Convert to 512-bit seed |
+| `parse_seed` | `mnemonic`, `passphrase?` | `object` | Prepare PBKDF2 inputs |
 
 ### BIP32 Derivation
 
-| Function | Description |
-|----------|-------------|
-| `get_rootkey(seed)` | Master key from seed (HMAC-SHA512) |
-| `derive_x(params)` | Derive child key at path (use `m/` for private, `M/` for public) |
-| `derive_child_key(key, cc, index, is_public, is_hardened)` | Single child derivation |
-| `format_keys(seed, data, config, index, coin)` | Format keys for currency |
-| `get_bip32dat(coin)` | Get BIP32 config |
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `get_rootkey` | `seed` (hex) | `string` (128 hex chars) | Master key via HMAC-SHA512 |
+| `derive_x` | `{dpath, key, cc}` | `object` | Derive key at path |
+| `derive_child_key` | `key, cc, index, is_public, is_hardened` | `object` | Single child derivation |
+| `format_keys` | `seed, data, config, index, coin` | `object` | Format as address/WIF |
+| `get_bip32dat` | `coin` | `object\|false` | Get BIP32 config for coin |
 
 ### Extended Key Functions
 
-| Function | Description |
-|----------|-------------|
-| `ext_keys(key_data, config)` | Generate xprv/xpub from key data |
-| `xpub_obj(config, path, cc, key)` | Build xpub object with ID |
-| `key_cc_xpub(xpub)` | Parse xpub to key + chaincode |
-| `objectify_extended(hex)` | Parse extended key components |
-| `b58c_x_payload(key_data, config)` | Build Base58Check payload |
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `ext_keys` | `key_data, config` | `{xprv, xpub}` | Generate extended keys |
+| `key_cc_xpub` | `xpub` | `{key, cc, version}` | Parse xpub to components |
+| `objectify_extended` | `hex` | `object` | Parse extended key fields |
+| `xpub_obj` | `config, path, cc, key` | `object` | Build xpub with ID |
+
+### Derivation Path Format
+
+- Use `m/` prefix for **private key** derivation (hardened paths allowed)
+- Use `M/` prefix for **public key** derivation (non-hardened only)
+- Hardened indices use `'` suffix: `m/44'/0'/0'`
+- Standard paths: `m/purpose'/coin'/account'/change/index`
+
+```javascript
+// Private key derivation (from master key)
+Bip39Utils.derive_x({ dpath: "m/84'/0'/0'/0/0", key: masterKey, cc: chainCode });
+
+// Public key derivation (from xpub)
+Bip39Utils.derive_x({ dpath: "M/0/0", key: pubKey, cc: chainCode });
+```
 
 ---
 
@@ -226,28 +310,83 @@ const address = CryptoUtils.pub_to_address_bech32("bc", derived.key);
 From [Mastering Bitcoin](https://github.com/bitcoinbook/bitcoinbook):
 
 ```javascript
-Bip39Utils.test_phrase     // "army van defense carry jealous true garbage claim echo media make crunch"
-Bip39Utils.expected_seed   // "5b56c417303faa3fcba7e57400e120a0..."
+Bip39Utils.test_phrase      // "army van defense carry jealous true garbage claim echo media make crunch"
+Bip39Utils.expected_seed    // "5b56c417303faa3fcba7e57400e120a0ca83ec5a4fc9ffba757fbe63fbd77a89..."
 Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
 ```
 
 ### Expected xpubs for Test Phrase
 
-| Currency | Path | xpub |
-|----------|------|------|
+| Currency | Path | Extended Public Key |
+|----------|------|---------------------|
 | BTC SegWit | m/84'/0'/0' | `zpub6rMRRntHrvMM2EPvnrZ7HmbnNr74JAxmCXFbAwfjNKqGXJbHve9yWMk9SzsF9jQHM6RsaExfmAjyypn369i5dT3uXrRyiDra5nqpCjuPmWT` |
 | BTC Legacy | m/44'/0'/0' | `xpub6Cy7dUR4ZKF22HEuVq7epRgRsoXfL2MK1RE81CSvp1ZySySoYGXk5PUY9y9Cc5ExpnSwXyimQAsVhyyPDNDrfj4xjDsKZJNYgsHXoEPNCYQ` |
 | LTC SegWit | m/84'/2'/0' | `zpub6rbRn1jy6pNoaXtUZugXAx8VV1zBZs6SqSMq6HgQ5mMqcWMviesiraCEHY545HNMH1brYGnnMs3oyEye7TUqMaUrsb9ZzB9iC3dCLRvceeS` |
+| LTC Legacy | m/44'/2'/0' | `Ltub2ZWUsczPPDUFM7hvT9nQYot9zMFz7uemJ5bm6ABcCP4hfidiowXSJHawR4xVSvryHh7rHgyai98aWjnaTfYoGUigezgC4qQZcEBt5ZtymeB` |
 | DOGE | m/44'/3'/0' | `dgub8smKeZZ7MYVjDHcmH3LQAA8otmJKKPBBdAjEjuejEu73kysYGV239wLfb3NPxFWoByXhd3Et6ndm66zRY5bby3gQfV55rhphg7156KktXhx` |
 | DASH | m/44'/5'/0' | `xpub6CQGNLTBiNDBRYeBXryYBrhr4wpPL51t9MabJzsubea9MZq7A3vohyiUr9rySo9aLyqMb9CAVnWewpcwdYBShcHaPcCUhDhAjuXsrEuRb9a` |
 | BCH | m/44'/145'/0' | `xpub6Breb6eRL7Ggnn61fkiLHZkySV2J3ENxLQJgnRy6Kxi4KZTRbyaNbZmhH11oamhr9W7y7mG6j8WP1UtWuiRu5nmAUqpSoqKbFbcftTW982k` |
 | ETH | m/44'/60'/0' | `xpub6CadpMraPwst8ZHcjTq6M2FYQQ37kou4LFivCP4dhatoHQjHZgSGpm3eGARnAxnZwfv4U6rar7Zvrnksejd4kwLY2DLGYLdTVdowrQdeWjb` |
+
+### Expected Addresses (Index 0)
+
+| Currency | Path | Address |
+|----------|------|---------|
+| BTC SegWit | m/84'/0'/0'/0/0 | `bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu` |
+| BTC Legacy | m/44'/0'/0'/0/0 | `1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm` |
+| LTC SegWit | m/84'/2'/0'/0/0 | `ltc1qnlqrp8w3ur3sl6d3dd3wmhr7c7yvaxefqzfqwt` |
+| ETH | m/44'/60'/0'/0/0 | `0xC3Fd29b2e57a9de90955D58E744b59C624056604` |
+
+---
+
+## Interactive Test Suite
+
+The test suite (`unit_tests_bip39_utils.html`) includes:
+
+### Automated Tests (45+ tests)
+- Mnemonic generation and validation
+- Seed derivation verification
+- Key derivation at various paths
+- Address format validation
+- xpub generation and parsing
+
+### Interactive Tools
+1. **Generate Mnemonic** - Create new 12/15/18/21/24 word phrases
+2. **Validate Mnemonic** - Check phrase validity, detect invalid words, verify checksum
+3. **Mnemonic → Seed** - Convert phrase to hex seed with optional passphrase
+4. **Seed → Root Key** - Generate master key from seed
+5. **BIP32 Derivation** - Derive keys at custom paths for any supported coin
+6. **Batch Derivation** - Generate multiple addresses from mnemonic
+7. **Generate xPubs** - Create extended public keys for all supported coins
+8. **Parse xPub** - Decode xpub and derive addresses
 
 ---
 
 ## Security Warning
 
 ⚠️ **Never enter real seed phrases on websites or share them with anyone.**
+
+This library is intended for:
+- Educational purposes
+- Development and testing
+- Generating watch-only wallets (xpub derivation)
+
+For production wallets, always use hardware wallets or audited wallet software.
+
+---
+
+## Dependencies
+
+- **sjcl.js** - Stanford JavaScript Crypto Library (SHA, HMAC, PBKDF2)
+- **crypto_utils.js** - Low-level crypto operations (secp256k1, Base58, Bech32)
+
+---
+
+## Related Projects
+
+- [crypto-utils-js](./crypto-utils.md) - Low-level cryptocurrency utilities
+- [xmr-utils-js](./xmr-utils-js.md) - Monero cryptographic utilities
+- [bitrequest](https://github.com/bitrequest/bitrequest.github.io) - Cryptocurrency point-of-sale PWA
 
 ---
 
