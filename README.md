@@ -13,6 +13,7 @@ Standalone JavaScript BIP39/BIP32 HD Wallet library for cryptocurrency applicati
 - **Multi-Currency Support** - Bitcoin, Litecoin, Ethereum, Dogecoin, Dash, Bitcoin Cash
 - **Address Formatting** - Legacy (P2PKH), SegWit (Bech32), and CashAddr formats
 - **Extended Keys** - xpub/zpub generation and parsing with address derivation
+- **Built-in Compatibility Testing** - Verify browser/environment support
 
 ## Live Demo
 
@@ -259,6 +260,63 @@ for (let i = 0; i < 5; i++) {
 
 ---
 
+## Compatibility Testing
+
+The library includes built-in test functions to verify browser/environment compatibility before use.
+
+### Quick Compatibility Check
+
+```javascript
+// Check if BIP39 derivation works
+const results = Bip39Utils.test_bip39_compatibility();
+if (results.compatible) {
+    console.log("Environment compatible!");
+}
+```
+
+### Individual Test Functions
+
+```javascript
+// Test mnemonic → seed derivation
+Bip39Utils.test_seed();  // returns true/false
+
+// Test BIP44 address derivation
+Bip39Utils.test_derivation();  // returns true/false
+
+// Test xpub address derivation
+Bip39Utils.test_xpub_support();  // returns true/false
+
+// Full compatibility check (includes CryptoUtils tests)
+Bip39Utils.test_bip39_compatibility();
+// Returns: {
+//   compatible: true/false,
+//   crypto_api: true/false,
+//   bigint: true/false,
+//   secp256k1: true/false,
+//   seed: true/false,
+//   derivation: true/false,
+//   xpub: true/false,
+//   errors: [],
+//   timing_ms: 25.3
+// }
+```
+
+### Test Constants
+
+The library exposes test vectors from the standard [BIP39 test phrase](https://github.com/trezor/python-mnemonic/blob/master/vectors.json):
+
+```javascript
+const TC = Bip39Utils.bip39_utils_const;
+
+TC.version          // "1.1.0"
+TC.test_phrase      // "army van defense carry jealous true garbage claim echo media make crunch"
+TC.expected_seed    // "5b56c417303faa3fcba7e57400e120a0ca83ec5a4fc9ffba757fbe63fbd77a89..."
+TC.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm" (BIP44 m/44'/0'/0'/0/0)
+TC.test_xpub        // "xpub6Cy7dUR4ZKF22HEuVq7epRgRsoXfL2MK1RE81CSvp1ZySySoYGXk5PUY9y9Cc5ExpnSwXyimQAsVhyyPDNDrfj4xjDsKZJNYgsHXoEPNCYQ"
+```
+
+---
+
 ## API Reference
 
 ### Mnemonic Functions
@@ -305,6 +363,22 @@ Bip39Utils.derive_x({ dpath: "m/84'/0'/0'/0/0", key: masterKey, cc: chainCode })
 Bip39Utils.derive_x({ dpath: "M/0/0", key: pubKey, cc: chainCode });
 ```
 
+### Testing Functions
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `test_seed` | - | `boolean` | Test mnemonic → seed derivation |
+| `test_derivation` | - | `boolean` | Test BIP44 address derivation |
+| `test_xpub_support` | - | `boolean` | Test xpub address derivation |
+| `test_bip39_compatibility` | - | `object` | Full compatibility check with timing |
+
+### Exported Constants
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `bip39_utils_const` | `object` | Test vectors and version info |
+| `bip32_configs` | `object` | BIP32 configuration for all supported coins |
+
 ---
 
 ## Test Vectors
@@ -346,7 +420,20 @@ Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
 
 The test suite (`unit_tests_bip39_utils.html`) includes:
 
-### Automated Tests (45+ tests)
+### Automated Tests (55+ tests)
+
+**Built-in Library Tests**
+- `Bip39Utils.test_seed` - Mnemonic → seed derivation
+- `Bip39Utils.test_derivation` - BIP44 address derivation
+- `Bip39Utils.test_xpub_support` - xpub address derivation
+- `Bip39Utils.test_bip39_compatibility` - Full compatibility check
+
+**Test Constants Validation**
+- Verify `test_phrase` produces `expected_seed`
+- Verify `expected_seed` produces `expected_address`
+- Verify `test_xpub` produces `expected_address`
+
+**Unit Tests**
 - Mnemonic generation and validation
 - Seed derivation verification
 - Key derivation at various paths
@@ -395,7 +482,7 @@ For production wallets, always use hardware wallets or audited wallet software.
 
 ## License
 
-MIT License
+AGPL-3.0 License
 
 ## Credits
 
