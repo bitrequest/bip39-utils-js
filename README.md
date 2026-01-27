@@ -110,7 +110,7 @@ const derived = Bip39Utils.derive_x({
 // Step 4: Generate SegWit address
 const publicKey = CryptoUtils.get_publickey(derived.key);
 const address = CryptoUtils.pub_to_address_bech32("bc", publicKey);
-// "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
+// "bc1qg0azlj4w2lrq8jssrrz6eprt2fe7f7edm4vpd5"
 ```
 
 ### Derive Bitcoin Legacy Address
@@ -139,11 +139,13 @@ const keys = Bip39Utils.format_keys(seed, derived, config, 0, "bitcoin");
 const mnemonic = "army van defense carry jealous true garbage claim echo media make crunch";
 const seed = Bip39Utils.mnemonic_to_seed(mnemonic);
 const rootKey = Bip39Utils.get_rootkey(seed);
+const masterKey = rootKey.slice(0, 64);
+const chainCode = rootKey.slice(64);
 
 const derived = Bip39Utils.derive_x({
     dpath: "m/44'/60'/0'/0/0",  // BIP44 Ethereum
-    key: rootKey.slice(0, 64),
-    cc: rootKey.slice(64)
+    key: masterKey,
+    cc: chainCode
 });
 
 const config = Bip39Utils.get_bip32dat("ethereum");
@@ -212,13 +214,13 @@ const derived = Bip39Utils.derive_x({
 
 // Generate SegWit address from derived public key
 const address = CryptoUtils.pub_to_address_bech32("bc", derived.key);
-// "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
+// "bc1qg0azlj4w2lrq8jssrrz6eprt2fe7f7edm4vpd5"
 ```
 
 ### Batch Address Generation from xpub
 
 ```javascript
-const xpub = "zpub6rMRRntHrvMM2...";
+const xpub = "zpub6rMRRntHrvMM2EPvnrZ7HmbnNr74JAxmCXFbAwfjNKqGXJbHve9yWMk9SzsF9jQHM6RsaExfmAjyypn369i5dT3uXrRyiDra5nqpCjuPmWT";
 const parsed = Bip39Utils.key_cc_xpub(xpub);
 
 // Generate first 5 receive addresses
@@ -311,7 +313,7 @@ From [Mastering Bitcoin](https://github.com/bitcoinbook/bitcoinbook):
 
 ```javascript
 Bip39Utils.test_phrase      // "army van defense carry jealous true garbage claim echo media make crunch"
-Bip39Utils.expected_seed    // "5b56c417303faa3fcba7e57400e120a0ca83ec5a4fc9ffba757fbe63fbd77a89..."
+Bip39Utils.expected_seed    // "5b56c417303faa3fcba7e57400e120a0ca83ec5a4fc9ffba757fbe63fbd77a89a1a3be4c67196f57c39a88b76373733891bfaba16ed27a813ceed498804c0570"
 Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
 ```
 
@@ -332,10 +334,11 @@ Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
 
 | Currency | Path | Address |
 |----------|------|---------|
-| BTC SegWit | m/84'/0'/0'/0/0 | `bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu` |
+| BTC SegWit | m/84'/0'/0'/0/0 | `bc1qg0azlj4w2lrq8jssrrz6eprt2fe7f7edm4vpd5` |
 | BTC Legacy | m/44'/0'/0'/0/0 | `1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm` |
-| LTC SegWit | m/84'/2'/0'/0/0 | `ltc1qnlqrp8w3ur3sl6d3dd3wmhr7c7yvaxefqzfqwt` |
-| ETH | m/44'/60'/0'/0/0 | `0xC3Fd29b2e57a9de90955D58E744b59C624056604` |
+| LTC SegWit | m/84'/2'/0'/0/0 | `ltc1qc64rhsxzmnre94nw4spn6866gqhmcpp05suu3c` |
+| LTC Legacy | m/44'/2'/0'/0/0 | `LZakyXotaE29Pehw21SoPuU832UhvJp4LG` |
+| ETH | m/44'/60'/0'/0/0 | `0x2161DedC3Be05B7Bb5aa16154BcbD254E9e9eb68` |
 
 ---
 
