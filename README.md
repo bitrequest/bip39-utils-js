@@ -303,7 +303,7 @@ Bip39Utils.test_bip39_compatibility();
 
 ### Test Constants
 
-The library exposes test vectors from the standard [BIP39 test phrase](https://github.com/trezor/python-mnemonic/blob/master/vectors.json):
+The library exposes test vectors from the standard [BIP39 test phrase](https://github.com/bitcoinbook/bitcoinbook/blob/f8b883dcd4e3d1b9adf40fed59b7e898fbd9241f/ch05.asciidoc):
 
 ```javascript
 const TC = Bip39Utils.bip39_utils_const;
