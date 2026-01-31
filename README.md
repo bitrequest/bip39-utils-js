@@ -10,9 +10,9 @@ Standalone JavaScript BIP39/BIP32 HD Wallet library for cryptocurrency applicati
 - **Mnemonic Validation** - Validate checksums and detect invalid words
 - **Seed Derivation** - PBKDF2 with 2048 iterations (BIP39 standard)
 - **BIP32 Key Derivation** - Hierarchical deterministic key derivation
-- **Multi-Currency Support** - Bitcoin, Litecoin, Ethereum, Dogecoin, Dash, Bitcoin Cash
-- **Address Formatting** - Legacy (P2PKH), SegWit (Bech32), and CashAddr formats
-- **Extended Keys** - xpub/zpub generation and parsing with address derivation
+- **Multi-Currency Support** - Bitcoin, Litecoin, Ethereum, Dogecoin, Dash, Bitcoin Cash, Kaspa
+- **Address Formatting** - Legacy (P2PKH), SegWit (Bech32), CashAddr, and Kaspa (40-bit bech32) formats
+- **Extended Keys** - xpub/zpub/kpub generation and parsing with address derivation
 - **Built-in Compatibility Testing** - Verify browser/environment support
 
 ## Live Demo
@@ -154,9 +154,32 @@ const keys = Bip39Utils.format_keys(seed, derived, config, 0, "ethereum");
 // { address: "0x...", pubkey: "...", privkey: "..." }
 ```
 
+### Derive Kaspa Address
+
+Kaspa uses a custom 8-character (40-bit) bech32 checksum variant with `kaspa:` prefix and `kpub` extended keys. Compatible with KasWare and Kaspium wallets.
+
+```javascript
+const mnemonic = "army van defense carry jealous true garbage claim echo media make crunch";
+const seed = Bip39Utils.mnemonic_to_seed(mnemonic);
+const rootKey = Bip39Utils.get_rootkey(seed);
+const masterKey = rootKey.slice(0, 64);
+const chainCode = rootKey.slice(64);
+
+const derived = Bip39Utils.derive_x({
+    dpath: "m/44'/111111'/0'/0/0",  // Kaspa uses coin type 111111
+    key: masterKey,
+    cc: chainCode
+});
+
+// Generate Kaspa address from public key
+const publicKey = CryptoUtils.get_publickey(derived.key);
+const address = CryptoUtils.pub_to_kaspa_address(publicKey);
+// "kaspa:qpuy2..." (67 characters total)
+```
+
 ---
 
-## Extended Public Keys (xpub/zpub)
+## Extended Public Keys (xpub/zpub/kpub)
 
 Extended public keys allow generating receive addresses without exposing private keys - essential for watch-only wallets and payment processing.
 
@@ -248,6 +271,7 @@ for (let i = 0; i < 5; i++) {
 | Dogecoin | `dogecoin` | - | `m/44'/3'/0'/0/` | D... |
 | Dash | `dash` | - | `m/44'/5'/0'/0/` | X... |
 | Bitcoin Cash | `bitcoin-cash` | - | `m/44'/145'/0'/0/` | bitcoincash:q... |
+| Kaspa | `kaspa` | - | `m/44'/111111'/0'/0/` | kaspa:q... |
 
 ### xpub Version Bytes
 
@@ -257,6 +281,21 @@ for (let i = 0; i < 5; i++) {
 | `0488b21e` | xpub | BTC Legacy, BCH, DASH, ETH |
 | `019da462` | Ltub | LTC Legacy |
 | `02facafd` | dgub | DOGE |
+| `038f332e` | kpub | Kaspa |
+
+### Kaspa Technical Notes
+
+Kaspa uses a custom bech32 variant that differs from standard Bitcoin bech32:
+
+| Feature | Bitcoin Bech32 | Kaspa Bech32 |
+|---------|----------------|--------------|
+| Checksum length | 6 chars (30-bit) | 8 chars (40-bit) |
+| HRP expansion | High + low 5 bits | Low 5 bits only |
+| Generator polynomial | 0x3b6a57b2 | Split 40-bit (8+32) |
+| Address prefix | bc1q... | kaspa:q... |
+| Extended key prefix | xpub/zpub | kpub (0x038f332e) |
+
+The implementation is pure JavaScript (~100 lines) with no WASM dependencies, compatible with KasWare and Kaspium wallets.
 
 ---
 
@@ -306,13 +345,13 @@ Bip39Utils.test_bip39_compatibility();
 The library exposes test vectors from the standard [BIP39 test phrase](https://github.com/bitcoinbook/bitcoinbook/blob/f8b883dcd4e3d1b9adf40fed59b7e898fbd9241f/ch05.asciidoc):
 
 ```javascript
-const TC = Bip39Utils.bip39_utils_const;
+const TestVector = Bip39Utils.bip39_utils_const;
 
-TC.version          // "1.1.0"
-TC.test_phrase      // "army van defense carry jealous true garbage claim echo media make crunch"
-TC.expected_seed    // "5b56c417303faa3fcba7e57400e120a0ca83ec5a4fc9ffba757fbe63fbd77a89..."
-TC.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm" (BIP44 m/44'/0'/0'/0/0)
-TC.test_xpub        // "xpub6Cy7dUR4ZKF22HEuVq7epRgRsoXfL2MK1RE81CSvp1ZySySoYGXk5PUY9y9Cc5ExpnSwXyimQAsVhyyPDNDrfj4xjDsKZJNYgsHXoEPNCYQ"
+TestVector.version          // "1.1.0"
+TestVector.test_phrase      // "army van defense carry jealous true garbage claim echo media make crunch"
+TestVector.expected_seed    // "5b56c417303faa3fcba7e57400e120a0ca83ec5a4fc9ffba757fbe63fbd77a89..."
+TestVector.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm" (BIP44 m/44'/0'/0'/0/0)
+TestVector.test_xpub        // "xpub6Cy7dUR4ZKF22HEuVq7epRgRsoXfL2MK1RE81CSvp1ZySySoYGXk5PUY9y9Cc5ExpnSwXyimQAsVhyyPDNDrfj4xjDsKZJNYgsHXoEPNCYQ"
 ```
 
 ---
@@ -403,6 +442,7 @@ Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
 | DASH | m/44'/5'/0' | `xpub6CQGNLTBiNDBRYeBXryYBrhr4wpPL51t9MabJzsubea9MZq7A3vohyiUr9rySo9aLyqMb9CAVnWewpcwdYBShcHaPcCUhDhAjuXsrEuRb9a` |
 | BCH | m/44'/145'/0' | `xpub6Breb6eRL7Ggnn61fkiLHZkySV2J3ENxLQJgnRy6Kxi4KZTRbyaNbZmhH11oamhr9W7y7mG6j8WP1UtWuiRu5nmAUqpSoqKbFbcftTW982k` |
 | ETH | m/44'/60'/0' | `xpub6CadpMraPwst8ZHcjTq6M2FYQQ37kou4LFivCP4dhatoHQjHZgSGpm3eGARnAxnZwfv4U6rar7Zvrnksejd4kwLY2DLGYLdTVdowrQdeWjb` |
+| KAS | m/44'/111111'/0' | `kpub2iGLMuLEVpTzYL97qUfMPweFV5XMpTLqLJR7hLTCRwCFmCH5e2oYpRYgSJ2HaEMMEV7XP7jxZZ3uQSB31qACR9i2Ldd1M1NVnnm51gDK7e6` |
 
 ### Expected Addresses (Index 0)
 
@@ -413,6 +453,7 @@ Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
 | LTC SegWit | m/84'/2'/0'/0/0 | `ltc1qc64rhsxzmnre94nw4spn6866gqhmcpp05suu3c` |
 | LTC Legacy | m/44'/2'/0'/0/0 | `LZakyXotaE29Pehw21SoPuU832UhvJp4LG` |
 | ETH | m/44'/60'/0'/0/0 | `0x2161DedC3Be05B7Bb5aa16154BcbD254E9e9eb68` |
+| KAS | m/44'/111111'/0'/0/0 | `kaspa:qpuy2rlwjl4l7kxf5klvnehdmvhdjqvr8c8esqmxzpn8m85qxvf4wnk6pdl2j` |
 
 ---
 
@@ -420,7 +461,7 @@ Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
 
 The test suite (`unit_tests_bip39_utils.html`) includes:
 
-### Automated Tests (55+ tests)
+### Automated Tests (60+ tests)
 
 **Built-in Library Tests**
 - `Bip39Utils.test_seed` - Mnemonic → seed derivation
@@ -437,18 +478,19 @@ The test suite (`unit_tests_bip39_utils.html`) includes:
 - Mnemonic generation and validation
 - Seed derivation verification
 - Key derivation at various paths
-- Address format validation
-- xpub generation and parsing
+- Address format validation (including Kaspa bech32 variant)
+- xpub/kpub generation and parsing
+- Kaspa address derivation and kpub compatibility
 
 ### Interactive Tools
 1. **Generate Mnemonic** - Create new 12/15/18/21/24 word phrases
 2. **Validate Mnemonic** - Check phrase validity, detect invalid words, verify checksum
 3. **Mnemonic → Seed** - Convert phrase to hex seed with optional passphrase
 4. **Seed → Root Key** - Generate master key from seed
-5. **BIP32 Derivation** - Derive keys at custom paths for any supported coin
+5. **BIP32 Derivation** - Derive keys at custom paths for any supported coin (including Kaspa)
 6. **Batch Derivation** - Generate multiple addresses from mnemonic
-7. **Generate xPubs** - Create extended public keys for all supported coins
-8. **Parse xPub** - Decode xpub and derive addresses
+7. **Generate xPubs** - Create extended public keys for all supported coins (xpub/zpub/kpub)
+8. **Parse xPub** - Decode xpub/kpub and derive addresses
 
 ---
 
