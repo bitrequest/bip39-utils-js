@@ -13,6 +13,7 @@ Standalone JavaScript BIP39/BIP32 HD Wallet library for cryptocurrency applicati
 - **Multi-Currency Support** - Bitcoin, Litecoin, Ethereum, Dogecoin, Dash, Bitcoin Cash, Kaspa
 - **Address Formatting** - Legacy (P2PKH), SegWit (Bech32), CashAddr, and Kaspa (40-bit bech32) formats
 - **Extended Keys** - xpub/zpub/kpub generation and parsing with address derivation
+- **Spark Protocol** - Derive all 5 Spark key pairs and encode bech32m Spark addresses
 - **Built-in Compatibility Testing** - Verify browser/environment support
 
 ## Live Demo
@@ -177,6 +178,35 @@ const address = CryptoUtils.pub_to_kaspa_address(publicKey);
 // "kaspa:qpuy2..." (67 characters total)
 ```
 
+### Derive Spark Keys and Address
+
+[Spark](https://spark.info) is a Lightning-compatible self-custodial payment protocol. It derives 5 dedicated key pairs from a BIP32 path rooted at `m/1073373'/{account}'`, then encodes the identity public key as a bech32m Spark address.
+
+```javascript
+const mnemonic = "army van defense carry jealous true garbage claim echo media make crunch";
+
+// Step 1: Convert mnemonic to seed
+const seed = Bip39Utils.mnemonic_to_seed(mnemonic);
+
+// Step 2: Derive all 5 Spark key pairs for account 1
+const keys = Bip39Utils.derive_spark_keys(seed, 1);
+// {
+//   identity:       { privkey: "f886ff43...", pubkey: "02a8d8b3..." },
+//   signing:        { privkey: "704c0f6b...", pubkey: "03656979..." },
+//   deposit:        { privkey: "fb2c2bc4...", pubkey: "0376271a..." },
+//   static_deposit: { privkey: "e3443748...", pubkey: "026683d4..." },
+//   htlc:           { privkey: "160ca6a6...", pubkey: "02f1f27a..." }
+// }
+
+// Step 3: Encode the identity pubkey as a mainnet Spark address
+const address = Bip39Utils.encode_spark_address(keys.identity.pubkey, "mainnet");
+// "spark1pgss92xck0lmsztvs0pn4duae8huds63dy0ek7flttuttl2uzw5uxj26ep0pvs"
+
+// Convenience: mnemonic \u2192 seed \u2192 Spark address in one call
+const spark_address = Bip39Utils.seed_to_spark_address(seed, 1);
+// "spark1pgss92xck0lmsztvs0pn4duae8huds63dy0ek7flttuttl2uzw5uxj26ep0pvs"
+```
+
 ---
 
 ## Extended Public Keys (xpub/zpub/kpub)
@@ -272,6 +302,7 @@ for (let i = 0; i < 5; i++) {
 | Dash | `dash` | - | `m/44'/5'/0'/0/` | X... |
 | Bitcoin Cash | `bitcoin-cash` | - | `m/44'/145'/0'/0/` | bitcoincash:q... |
 | Kaspa | `kaspa` | - | `m/44'/111111'/0'/0/` | kaspa:q... |
+| Spark | - | - | `m/1073373'/{account}'` | spark1... |
 
 ### xpub Version Bytes
 
@@ -296,6 +327,29 @@ Kaspa uses a custom bech32 variant that differs from standard Bitcoin bech32:
 | Extended key prefix | xpub/zpub | kpub (0x038f332e) |
 
 The implementation is pure JavaScript (~100 lines) with no WASM dependencies, compatible with KasWare and Kaspium wallets.
+
+### Spark Technical Notes
+
+Spark uses BIP32 hardened derivation under a dedicated purpose path, producing five semantically distinct key pairs from a single seed.
+
+| Key Type | BIP32 Path | Role |
+|----------|-----------|------|
+| `identity` | `m/1073373'/{account}'/0'` | Public identity — encoded as the Spark address |
+| `signing` | `m/1073373'/{account}'/1'` | Transaction signing |
+| `deposit` | `m/1073373'/{account}'/2'` | Receiving deposits |
+| `static_deposit` | `m/1073373'/{account}'/3'` | Static deposit address |
+| `htlc` | `m/1073373'/{account}'/4'` | HTLC (Hash Time-Locked Contract) |
+
+The Spark address is a **bech32m** encoding of a protobuf-wrapped identity public key:
+
+| Feature | Value |
+|---------|-------|
+| Encoding | bech32m |
+| Payload | Protobuf field 1 (tag `0x0A`, length `0x21`) + 33-byte compressed pubkey |
+| Mainnet HRP | `spark` |
+| Testnet HRP | `sparkt` |
+| Regtest HRP | `sparkrt` |
+| Signet HRP | `sparks` |
 
 ---
 
@@ -324,6 +378,9 @@ Bip39Utils.test_derivation();  // returns true/false
 
 // Test xpub address derivation
 Bip39Utils.test_xpub_support();  // returns true/false
+
+// Test Spark key and address derivation
+Bip39Utils.test_spark_derivation();  // returns true/false
 
 // Full compatibility check (includes CryptoUtils tests)
 Bip39Utils.test_bip39_compatibility();
@@ -378,6 +435,15 @@ TestVector.test_xpub        // "xpub6Cy7dUR4ZKF22HEuVq7epRgRsoXfL2MK1RE81CSvp1Zy
 | `format_keys` | `seed, data, config, index, coin` | `object` | Format as address/WIF |
 | `get_bip32dat` | `coin` | `object\|false` | Get BIP32 config for coin |
 
+### Spark Functions
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `derive_spark_keys` | `seed` (hex), `account` (int) | `object` | Derive all 5 Spark key pairs |
+| `encode_spark_address` | `identity_pubkey_hex`, `network?` | `string` | Encode pubkey as bech32m Spark address |
+| `seed_to_spark_address` | `seed` (hex), `account` (int) | `string` | Convenience: seed → Spark address |
+| `test_spark_derivation` | - | `boolean` | Verify Spark key and address derivation |
+
 ### Extended Key Functions
 
 | Function | Parameters | Returns | Description |
@@ -410,6 +476,7 @@ Bip39Utils.derive_x({ dpath: "M/0/0", key: pubKey, cc: chainCode });
 | `test_derivation` | - | `boolean` | Test BIP44 address derivation |
 | `test_xpub_support` | - | `boolean` | Test xpub address derivation |
 | `test_bip39_compatibility` | - | `object` | Full compatibility check with timing |
+| `test_spark_derivation` | - | `boolean` | Verify Spark key and address derivation |
 
 ### Exported Constants
 
@@ -428,6 +495,27 @@ From [Mastering Bitcoin](https://github.com/bitcoinbook/bitcoinbook):
 Bip39Utils.test_phrase      // "army van defense carry jealous true garbage claim echo media make crunch"
 Bip39Utils.expected_seed    // "5b56c417303faa3fcba7e57400e120a0ca83ec5a4fc9ffba757fbe63fbd77a89a1a3be4c67196f57c39a88b76373733891bfaba16ed27a813ceed498804c0570"
 Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
+```
+
+### Spark Test Vectors (Account 1)
+
+```javascript
+Bip39Utils.test_spark_derivation()  // true
+
+// derive_spark_keys(expected_seed, 1)
+identity:       { privkey: "f886ff43d6c40c33c271dec45fee48b117264bc4e9058a14726cf23d8ea144dc",
+                  pubkey:  "02a8d8b3ffb8096c83c33ab79dc9efc6c351691f9b793f5af8b5fd5c13a9c3495a" }
+signing:        { privkey: "704c0f6bbb935b375e3c6ab22509a22cd99bef8fa4e876f67fbf3cb8dc2c8944",
+                  pubkey:  "0365697934dd73fda0e7225b32484de80c186c9f7de8e2113877ad2dd02e0cae64" }
+deposit:        { privkey: "fb2c2bc440a60fdd18801a5c454e8441c4a1ba704ddbf23ccca3269a6ffe090a",
+                  pubkey:  "0376271ac867d40487a8d84d5f1617e753e3e69500b8dd921879f738980dff4c8c" }
+static_deposit: { privkey: "e3443748e86922956fbc83717305836bb8d322c788cc6e4f98ce219e7c6273df",
+                  pubkey:  "026683d4e3a884e297addd1d97295c345bf7c4cf2d7475b79bf295f3c50883f771" }
+htlc:           { privkey: "160ca6a6dd2a9566c1a6ab2d217fcb587771c2b77a3ff69f09a3065a6b1b355b",
+                  pubkey:  "02f1f27a82bafcf67766f623409f3226020cf8be135ca177c810f143c5f2d9fc32" }
+
+// encode_spark_address(identity.pubkey, "mainnet")
+"spark1pgss92xck0lmsztvs0pn4duae8huds63dy0ek7flttuttl2uzw5uxj26ep0pvs"
 ```
 
 ### Expected xpubs for Test Phrase
@@ -461,13 +549,14 @@ Bip39Utils.expected_address // "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm"
 
 The test suite (`unit_tests_bip39_utils.html`) includes:
 
-### Automated Tests (60+ tests)
+### Automated Tests (67+ tests)
 
 **Built-in Library Tests**
 - `Bip39Utils.test_seed` - Mnemonic → seed derivation
 - `Bip39Utils.test_derivation` - BIP44 address derivation
 - `Bip39Utils.test_xpub_support` - xpub address derivation
 - `Bip39Utils.test_bip39_compatibility` - Full compatibility check
+- `Bip39Utils.test_spark_derivation` - Spark key and address derivation
 
 **Test Constants Validation**
 - Verify `test_phrase` produces `expected_seed`
@@ -481,6 +570,8 @@ The test suite (`unit_tests_bip39_utils.html`) includes:
 - Address format validation (including Kaspa bech32 variant)
 - xpub/kpub generation and parsing
 - Kaspa address derivation and kpub compatibility
+- Spark key derivation (all 5 key types, compressed pubkeys, expected vectors)
+- Spark bech32m address encoding and network prefixes
 
 ### Interactive Tools
 1. **Generate Mnemonic** - Create new 12/15/18/21/24 word phrases
@@ -491,6 +582,7 @@ The test suite (`unit_tests_bip39_utils.html`) includes:
 6. **Batch Derivation** - Generate multiple addresses from mnemonic
 7. **Generate xPubs** - Create extended public keys for all supported coins (xpub/zpub/kpub)
 8. **Parse xPub** - Decode xpub/kpub and derive addresses
+9. **Spark Keys Derivation** - Derive all 5 Spark key pairs and Spark address from mnemonic
 
 ---
 
