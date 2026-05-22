@@ -18,9 +18,9 @@ Standalone JavaScript BIP39/BIP32 HD Wallet library for cryptocurrency applicati
 
 ## Live Demo
 
-**[🔑 BIP39 Utils Test Suite](https://bitrequest.github.io/unit_tests_bip39_utils.html)** - Interactive tests and tools
+**[🔑 BIP39 Utils Test Suite](https://bitrequest.github.io/unit_tests/bip39_utils.html)** - Interactive tests and tools
 
-**[🔐 Crypto Utils Test Suite](https://bitrequest.github.io/unit_tests_crypto_utils.html)** - Low-level crypto utilities
+**[🔐 Crypto Utils Test Suite](https://bitrequest.github.io/unit_tests/crypto_utils.html)** - Low-level crypto utilities
 
 ---
 
@@ -30,10 +30,10 @@ Standalone JavaScript BIP39/BIP32 HD Wallet library for cryptocurrency applicati
 
 ```bash
 mkdir bip39_utils && cd bip39_utils && \
-curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests_bip39_utils.html && \
-curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_bip39_utils.js && \
-curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_crypto_utils.js && \
-curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_sjcl.js
+curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests/bip39_utils.html && \
+curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/bip39_utils.js && \
+curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/crypto_utils.js && \
+curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/sjcl.js
 ```
 
 Then open `unit_tests_bip39_utils.html` in your browser.
@@ -42,10 +42,10 @@ Then open `unit_tests_bip39_utils.html` in your browser.
 
 | File | Description |
 |------|-------------|
-| [assets_js_lib_sjcl.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_sjcl.js) | Stanford JavaScript Crypto Library |
-| [assets_js_lib_crypto_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_crypto_utils.js) | Crypto utilities (secp256k1, hashing, encoding) |
-| [assets_js_lib_bip39_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets_js_lib_bip39_utils.js) | BIP39/BIP32 HD wallet functions |
-| [unit_tests_bip39_utils.html](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests_bip39_utils.html) | Interactive test suite |
+| [assets_js_lib_sjcl.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/sjcl.js) | Stanford JavaScript Crypto Library |
+| [assets_js_lib_crypto_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib_crypto_utils.js) | Crypto utilities (secp256k1, hashing, encoding) |
+| [assets_js_lib_bip39_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib_bip39_utils.js) | BIP39/BIP32 HD wallet functions |
+| [unit_tests_bip39_utils.html](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests/bip39_utils.html) | Interactive test suite |
 
 ---
 
