@@ -45,7 +45,7 @@ Then open `unit_tests_bip39_utils.html` in your browser.
 | [sjcl.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/sjcl.js) | Stanford JavaScript Crypto Library |
 | [crypto_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/crypto_utils.js) | Crypto utilities (secp256k1, hashing, encoding) |
 | [bip39_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/bip39_utils.js) | BIP39/BIP32 HD wallet functions |
-| [bip39_utils.html](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests/bip39/utils.html) | Interactive test suite |
+| [bip39_utils.html](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests/bip39_utils.html) | Interactive test suite |
 
 ---
 
