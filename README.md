@@ -42,10 +42,10 @@ Then open `unit_tests_bip39_utils.html` in your browser.
 
 | File | Description |
 |------|-------------|
-| [assets_js_lib_sjcl.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/sjcl.js) | Stanford JavaScript Crypto Library |
-| [assets_js_lib_crypto_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib_crypto_utils.js) | Crypto utilities (secp256k1, hashing, encoding) |
-| [assets_js_lib_bip39_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib_bip39_utils.js) | BIP39/BIP32 HD wallet functions |
-| [unit_tests_bip39_utils.html](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests/bip39_utils.html) | Interactive test suite |
+| [sjcl.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/sjcl.js) | Stanford JavaScript Crypto Library |
+| [crypto_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/crypto_utils.js) | Crypto utilities (secp256k1, hashing, encoding) |
+| [bip39_utils.js](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/bip39_utils.js) | BIP39/BIP32 HD wallet functions |
+| [bip39_utils.html](https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/unit_tests/bip39/utils.html) | Interactive test suite |
 
 ---
 
@@ -54,9 +54,9 @@ Then open `unit_tests_bip39_utils.html` in your browser.
 ### HTML Setup
 
 ```html
-<script src="assets_js_lib_sjcl.js"></script>
-<script src="assets_js_lib_crypto_utils.js"></script>
-<script src="assets_js_lib_bip39_utils.js"></script>
+<script src="bip39_utils/sjcl.js"></script>
+<script src="bip39_utils/crypto_utils.js"></script>
+<script src="bip39_utils/bip39_utils.js"></script>
 ```
 
 ---
