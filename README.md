@@ -36,7 +36,7 @@ curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master
 curl -O https://raw.githubusercontent.com/bitrequest/bitrequest.github.io/master/assets/js/lib/sjcl.js
 ```
 
-Then open `unit_tests_bip39_utils.html` in your browser.
+Then open `bip39_utils.html` in your browser.
 
 ### Manual Download
 
@@ -130,7 +130,7 @@ const derived = Bip39Utils.derive_x({
 });
 
 // Generate Legacy address using format_keys
-const config = Bip39Utils.get_bip32dat("bitcoin");
+const config = Bip39Utils.get_bip32_config("bitcoin");
 const keys = Bip39Utils.format_keys(seed, derived, config, 0, "bitcoin");
 // { index: 0, address: "1HQ3rb7nyLPrjnuW85MUknPekwkn7poAUm", pubkey: "02a1...", privkey: "Kym..." }
 ```
@@ -150,7 +150,7 @@ const derived = Bip39Utils.derive_x({
     cc: chainCode
 });
 
-const config = Bip39Utils.get_bip32dat("ethereum");
+const config = Bip39Utils.get_bip32_config("ethereum");
 const keys = Bip39Utils.format_keys(seed, derived, config, 0, "ethereum");
 // { address: "0x...", pubkey: "...", privkey: "..." }
 ```
@@ -175,7 +175,7 @@ const derived = Bip39Utils.derive_x({
 // Generate Kaspa address from public key
 const publicKey = CryptoUtils.get_publickey(derived.key);
 const address = CryptoUtils.pub_to_kaspa_address(publicKey);
-// "kaspa:qpuy2..." (67 characters total)
+// "kaspa:qpd7m..." (67 characters total)
 ```
 
 ### Derive Spark Keys and Address
@@ -230,7 +230,7 @@ const derived = Bip39Utils.derive_x({
 });
 
 // Get bitcoin config
-const config = Bip39Utils.get_bip32dat("bitcoin");
+const config = Bip39Utils.get_bip32_config("bitcoin");
 
 // Generate extended keys
 // ext_keys returns { xprv: "zprv...", xpub: "zpub..." }
@@ -402,7 +402,7 @@ Bip39Utils.test_bip39_compatibility();
 The library exposes test vectors from the standard [BIP39 test phrase](https://github.com/bitcoinbook/bitcoinbook/blob/f8b883dcd4e3d1b9adf40fed59b7e898fbd9241f/ch05.asciidoc):
 
 ```javascript
-const TestVector = Bip39Utils.bip39_utils_const;
+const TestVector = Bip39Utils.bip39_utils_test_vectors;
 
 TestVector.version          // "1.1.0"
 TestVector.test_phrase      // "army van defense carry jealous true garbage claim echo media make crunch"
@@ -433,7 +433,7 @@ TestVector.test_xpub        // "xpub6Cy7dUR4ZKF22HEuVq7epRgRsoXfL2MK1RE81CSvp1Zy
 | `derive_x` | `{dpath, key, cc}` | `object` | Derive key at path |
 | `derive_child_key` | `key, cc, index, is_public, is_hardened` | `object` | Single child derivation |
 | `format_keys` | `seed, data, config, index, coin` | `object` | Format as address/WIF |
-| `get_bip32dat` | `coin` | `object\|false` | Get BIP32 config for coin |
+| `get_bip32_config` | `coin` | `object\|false` | Get BIP32 config for coin |
 
 ### Spark Functions
 
@@ -482,7 +482,7 @@ Bip39Utils.derive_x({ dpath: "M/0/0", key: pubKey, cc: chainCode });
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `bip39_utils_const` | `object` | Test vectors and version info |
+| `bip39_utils_test_vectors` | `object` | Test vectors and version info |
 | `bip32_configs` | `object` | BIP32 configuration for all supported coins |
 
 ---
@@ -530,7 +530,7 @@ htlc:           { privkey: "160ca6a6dd2a9566c1a6ab2d217fcb587771c2b77a3ff69f09a3
 | DASH | m/44'/5'/0' | `xpub6CQGNLTBiNDBRYeBXryYBrhr4wpPL51t9MabJzsubea9MZq7A3vohyiUr9rySo9aLyqMb9CAVnWewpcwdYBShcHaPcCUhDhAjuXsrEuRb9a` |
 | BCH | m/44'/145'/0' | `xpub6Breb6eRL7Ggnn61fkiLHZkySV2J3ENxLQJgnRy6Kxi4KZTRbyaNbZmhH11oamhr9W7y7mG6j8WP1UtWuiRu5nmAUqpSoqKbFbcftTW982k` |
 | ETH | m/44'/60'/0' | `xpub6CadpMraPwst8ZHcjTq6M2FYQQ37kou4LFivCP4dhatoHQjHZgSGpm3eGARnAxnZwfv4U6rar7Zvrnksejd4kwLY2DLGYLdTVdowrQdeWjb` |
-| KAS | m/44'/111111'/0' | `kpub2iGLMuLEVpTzYL97qUfMPweFV5XMpTLqLJR7hLTCRwCFmCH5e2oYpRYgSJ2HaEMMEV7XP7jxZZ3uQSB31qACR9i2Ldd1M1NVnnm51gDK7e6` |
+| KAS | m/44'/111111'/0' | `kpub2K9uJbUJ87vgVe6SdLqqZMiFWe5y4J9zjJX3u2vy3jbSgtd4sxK26xUsYTz6vuFs7v7VvAiUpoq9PtcPv2wFz79QgE618Mxkf5rou8Xe484` |
 
 ### Expected Addresses (Index 0)
 
@@ -541,13 +541,13 @@ htlc:           { privkey: "160ca6a6dd2a9566c1a6ab2d217fcb587771c2b77a3ff69f09a3
 | LTC SegWit | m/84'/2'/0'/0/0 | `ltc1qc64rhsxzmnre94nw4spn6866gqhmcpp05suu3c` |
 | LTC Legacy | m/44'/2'/0'/0/0 | `LZakyXotaE29Pehw21SoPuU832UhvJp4LG` |
 | ETH | m/44'/60'/0'/0/0 | `0x2161DedC3Be05B7Bb5aa16154BcbD254E9e9eb68` |
-| KAS | m/44'/111111'/0'/0/0 | `kaspa:qpuy2rlwjl4l7kxf5klvnehdmvhdjqvr8c8esqmxzpn8m85qxvf4wnk6pdl2j` |
+| KAS | m/44'/111111'/0'/0/0 | `kaspa:qpd7m89g20e989s8ue5gqkwkv9k94nvxe562exrey7lrcjmzqegn2wspgcke4` |
 
 ---
 
 ## Interactive Test Suite
 
-The test suite (`unit_tests_bip39_utils.html`) includes:
+The test suite (`bip39_utils.html`) includes:
 
 ### Automated Tests (67+ tests)
 
